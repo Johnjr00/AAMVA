@@ -189,16 +189,19 @@ def test_ca_omits_zc_subfile_when_no_hair_or_zc_data():
 
 
 def test_brown_is_brn_not_bro():
-    """California's brown deviation: BRN for eye (DAY) and hair (ZCB)."""
+    """California's brown deviation: BRN for eye (DAY) and hair (DAZ, ZCB)."""
     parsed = parser.parse(encode(_sample_ca()))
     assert parsed.subfile("DL").as_dict()["DAY"] == "BRN"
+    assert parsed.subfile("DL").as_dict()["DAZ"] == "BRN"
     assert parsed.subfile("ZC").as_dict()["ZCB"] == "BRN"
 
 
-def test_hair_not_emitted_as_daz_in_dl_subfile():
-    """Hair colour lives in ZCB, so DAZ must not appear in the DL subfile."""
+def test_hair_emitted_in_both_daz_and_zcb():
+    """California carries hair colour in BOTH the DL DAZ element and ZC/ZCB."""
     parsed = parser.parse(encode(_sample_ca()))
-    assert "DAZ" not in parsed.subfile("DL").as_dict()
+    daz = parsed.subfile("DL").as_dict()["DAZ"]
+    zcb = parsed.subfile("ZC").as_dict()["ZCB"]
+    assert daz == zcb == "BRN"
 
 
 def test_dates_formatted_mmddccyy():

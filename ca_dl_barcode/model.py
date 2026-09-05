@@ -78,7 +78,7 @@ class LicenseData:
     # -- Physical description -----------------------------------------------
     sex: str = ""                    # DBC (1/2/9)
     eye_color: str = ""              # DAY (California colour code)
-    hair_color: str = ""             # -> ZCB in the California ZC subfile
+    hair_color: str = ""             # DAZ (DL subfile) AND ZCB (ZC subfile)
     height_value: str = ""           # numeric part of DAU
     height_unit: str = C.HEIGHT_UNIT_INCHES
     weight_lb: str = ""              # DAW (optional)
@@ -165,8 +165,10 @@ class LicenseData:
         add("DAJ", self._mandatory_value(self.state))
         add("DAK", F.format_postal(self.postal_code))
 
-        # Optional physical extras.  (Hair colour is NOT emitted as DAZ here:
-        # California encodes it as ZCB in the ZC subfile - see zc_elements.)
+        # Optional physical extras.  California emits hair colour BOTH as the
+        # standard AAMVA DAZ element here AND as ZCB in the jurisdiction ZC
+        # subfile (see zc_elements); both carry the same California colour code.
+        add_optional("DAZ", self.hair_color)
         add_optional("DAW", F.format_weight(self.weight_lb))
 
         # Document discriminator + country (mandatory).

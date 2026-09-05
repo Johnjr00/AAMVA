@@ -60,9 +60,10 @@ reproduces:
 - **Brown is `BRN`, not `BRO`.** The AAMVA D‑20 dictionary abbreviates brown as
   `BRO`, but California encodes it as `BRN` for both eye colour (`DAY`) and hair
   colour (`ZCB`). Only brown deviates; other colours use the standard D‑20 code.
-- **Hair colour lives in the `ZC` subfile, not `DAZ`.** California carries hair
-  colour in the jurisdiction‑specific `ZC` subfile as element `ZCB`, so the
-  standard `DAZ` element is **not** emitted.
+- **Hair colour is encoded twice.** California carries hair colour in *both* the
+  standard AAMVA `DAZ` element (in the `DL` subfile) *and* as element `ZCB` in
+  the jurisdiction‑specific `ZC` subfile. Both use the same California colour
+  code.
 
 The California `ZC` subfile layout is:
 
@@ -73,10 +74,10 @@ The California `ZC` subfile layout is:
 | `ZCC` | present but blank on issued cards |
 | `ZCD` | present but blank on issued cards |
 
-Set the hair colour in **Physical description**; the `ZC` subfile is emitted
-whenever a hair colour is present (with `ZCC`/`ZCD` written blank). Leave the
-hair colour empty to omit the `ZC` subfile entirely and produce a clean,
-`DL`‑only barcode.
+Set the hair colour once in **Physical description**; it populates both `DAZ`
+and `ZCB`. The `ZC` subfile is emitted whenever a hair colour is present (with
+`ZCC`/`ZCD` written blank). Leave the hair colour empty to omit both `DAZ` and
+the `ZC` subfile.
 
 ## Requirements
 

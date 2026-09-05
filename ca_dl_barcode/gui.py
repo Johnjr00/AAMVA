@@ -213,9 +213,9 @@ class BarcodeApp(ttk.Frame):
         self._combo(f, "sex", "Sex (DBC) *", _combo_values(C.SEX_CODES), 0, 0)
         self._combo(f, "eye_color", "Eye colour (DAY) *",
                    _combo_values(C.EYE_COLORS), 0, 1)
-        self._combo(f, "hair_color", "Hair colour (ZCB)",
+        self._combo(f, "hair_color", "Hair colour (DAZ+ZCB)",
                    [""] + _combo_values(C.HAIR_COLORS), 1, 0,
-                   hint="California stores hair colour in the ZC subfile (ZCB)")
+                   hint="California encodes hair colour in both DAZ and ZC/ZCB")
         self._entry(f, "height_value", "Height (DAU) *", 1, 1,
                    hint="Number only, e.g. 68")
         self._combo(f, "height_unit", "Height unit",
@@ -255,10 +255,11 @@ class BarcodeApp(ttk.Frame):
 
     def _build_zc_section(self, parent):
         f = self._section(parent, "California jurisdiction subfile (ZC)")
-        note = ("California's ZC subfile has no ZCA. ZCB carries the hair "
-                "colour (set it in Physical description above); ZCC and ZCD "
-                "are present but blank on issued cards. The ZC subfile is "
-                "emitted whenever a hair colour is set.")
+        note = ("California encodes hair colour in BOTH the standard DAZ "
+                "element and here as ZCB. California's ZC subfile has no ZCA; "
+                "ZCB carries the hair colour (set it in Physical description "
+                "above); ZCC and ZCD are present but blank on issued cards. "
+                "The ZC subfile is emitted whenever a hair colour is set.")
         ttk.Label(f, text=note, wraplength=760, foreground="#555").grid(
             row=0, column=0, columnspan=4, sticky="w", pady=(0, 4))
         self._entry(f, "zcc", "ZCC (usually blank)", 1, 0)
