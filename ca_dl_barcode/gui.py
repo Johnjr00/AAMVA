@@ -213,8 +213,9 @@ class BarcodeApp(ttk.Frame):
         self._combo(f, "sex", "Sex (DBC) *", _combo_values(C.SEX_CODES), 0, 0)
         self._combo(f, "eye_color", "Eye colour (DAY) *",
                    _combo_values(C.EYE_COLORS), 0, 1)
-        self._combo(f, "hair_color", "Hair colour (DAZ)",
-                   [""] + _combo_values(C.HAIR_COLORS), 1, 0)
+        self._combo(f, "hair_color", "Hair colour (ZCB)",
+                   [""] + _combo_values(C.HAIR_COLORS), 1, 0,
+                   hint="California stores hair colour in the ZC subfile (ZCB)")
         self._entry(f, "height_value", "Height (DAU) *", 1, 1,
                    hint="Number only, e.g. 68")
         self._combo(f, "height_unit", "Height unit",
@@ -254,16 +255,14 @@ class BarcodeApp(ttk.Frame):
 
     def _build_zc_section(self, parent):
         f = self._section(parent, "California jurisdiction subfile (ZC)")
-        note = ("California encodes private data in a ZC subfile. The public "
-                "AAMVA standard does not define these elements - enter the "
-                "values from your authoritative CA reference. Blank elements "
-                "are omitted; leave all blank to skip the ZC subfile entirely.")
+        note = ("California's ZC subfile has no ZCA. ZCB carries the hair "
+                "colour (set it in Physical description above); ZCC and ZCD "
+                "are present but blank on issued cards. The ZC subfile is "
+                "emitted whenever a hair colour is set.")
         ttk.Label(f, text=note, wraplength=760, foreground="#555").grid(
             row=0, column=0, columnspan=4, sticky="w", pady=(0, 4))
-        self._entry(f, "zca", "ZCA", 1, 0)
-        self._entry(f, "zcb", "ZCB", 1, 1)
-        self._entry(f, "zcc", "ZCC", 2, 0)
-        self._entry(f, "zcd", "ZCD", 2, 1)
+        self._entry(f, "zcc", "ZCC (usually blank)", 1, 0)
+        self._entry(f, "zcd", "ZCD (usually blank)", 1, 1)
 
     def _build_advanced_section(self, parent):
         f = self._section(parent, "Advanced  (header & symbol)")
@@ -353,7 +352,7 @@ class BarcodeApp(ttk.Frame):
             limited_duration=bool(self.vars["limited_duration"].get()),
             organ_donor=bool(self.vars["organ_donor"].get()),
             veteran=bool(self.vars["veteran"].get()),
-            zc=ZCSubfile(zca=g("zca"), zcb=g("zcb"), zcc=g("zcc"), zcd=g("zcd")),
+            zc=ZCSubfile(zcc=g("zcc"), zcd=g("zcd")),
         )
 
     def _symbol_options(self):
@@ -513,8 +512,8 @@ class BarcodeApp(ttk.Frame):
             "first_truncation": "N - Not truncated",
             "middle_truncation": "N - Not truncated",
             "issue_date": "01/15/2020", "expiry_date": "03/22/2028",
-            "dob": "05/12/1985", "sex": "2 - Female", "eye_color": "BRO - Brown",
-            "hair_color": "BRO - Brown", "height_value": "65",
+            "dob": "05/12/1985", "sex": "2 - Female", "eye_color": "BRN - Brown",
+            "hair_color": "BRN - Brown", "height_value": "65",
             "height_unit": "in", "weight_lb": "130",
             "street1": "1234 MAIN ST", "street2": "", "city": "LOS ANGELES",
             "state": "CA", "postal_code": "90001", "dl_number": "D1234567",
@@ -522,7 +521,7 @@ class BarcodeApp(ttk.Frame):
             "document_discriminator": "ABCD1234567890", "inventory_control": "",
             "compliance_type": "F - REAL ID compliant",
             "card_revision_date": "01/01/2018",
-            "zca": "", "zcb": "", "zcc": "BRO", "zcd": "",
+            "zcc": "", "zcd": "",
         }
         for key, value in sample.items():
             if key in self.vars:

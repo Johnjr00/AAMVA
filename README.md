@@ -45,21 +45,38 @@ the California encoding used for the card design in production **2018 – Octobe
 | Dates | `MMDDCCYY` (US jurisdictions) |
 | Height (DAU) | `NNN in` / `NNN cm`, zero‑padded, 6 bytes (e.g. `068 in`) |
 | Postal (DAK) | numeric ZIP padded to 9 digits, fixed 11‑byte field |
-| Colours | AAMVA **D‑20** 3‑letter codes for eyes and hair |
+| Colours | 3‑letter codes; **California encodes brown as `BRN`** (the AAMVA D‑20 code is `BRO`) for both eye colour (DAY) and hair colour (ZCB) |
 
 The `DL` subfile always contains the **22 mandatory elements** (Table D.3):
 `DCA DCB DCD DBA DCS DAC DAD DBD DBB DBC DAY DAU DAG DAI DAJ DAK DAQ DCF DCG
 DDE DDF DDG`. Optional elements (Table D.4) are included only when you enter a
 value.
 
-### The California `ZC` subfile
+### California specifics (deviations from the base AAMVA standard)
 
-Real California cards carry a jurisdiction‑private `ZC` subfile (`ZCA`–`ZCD`).
-The **meaning of these elements is not defined by the public AAMVA standard**, so
-the app carries whatever you type verbatim, in element order, and omits blank
-ones. Enter the values from your own authoritative California reference; leave
-all four blank to omit the `ZC` subfile entirely and emit a clean, fully
-AAMVA‑compliant `DL`‑only barcode.
+Real California cards differ from a generic AAMVA card in two ways this app
+reproduces:
+
+- **Brown is `BRN`, not `BRO`.** The AAMVA D‑20 dictionary abbreviates brown as
+  `BRO`, but California encodes it as `BRN` for both eye colour (`DAY`) and hair
+  colour (`ZCB`). Only brown deviates; other colours use the standard D‑20 code.
+- **Hair colour lives in the `ZC` subfile, not `DAZ`.** California carries hair
+  colour in the jurisdiction‑specific `ZC` subfile as element `ZCB`, so the
+  standard `DAZ` element is **not** emitted.
+
+The California `ZC` subfile layout is:
+
+| Element | Contents |
+|---------|----------|
+| `ZCA` | *(not present)* |
+| `ZCB` | hair colour (California code) |
+| `ZCC` | present but blank on issued cards |
+| `ZCD` | present but blank on issued cards |
+
+Set the hair colour in **Physical description**; the `ZC` subfile is emitted
+whenever a hair colour is present (with `ZCC`/`ZCD` written blank). Leave the
+hair colour empty to omit the `ZC` subfile entirely and produce a clean,
+`DL`‑only barcode.
 
 ## Requirements
 

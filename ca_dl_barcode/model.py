@@ -26,33 +26,30 @@ Element = Tuple[str, str]
 @dataclass
 class ZCSubfile:
     """
-    California jurisdiction-specific ``ZC`` subfile.
+    California jurisdiction-specific ``ZC`` subfile (authoritative CA layout).
 
-    The public AAMVA standard does not define the meaning of California's ZC
-    elements (ZCA-ZCD); jurisdictions may encode private data here.  The values
-    are therefore carried verbatim as free text so an authoritative CA layout
-    can be plugged in without code changes.  Empty elements are omitted.
+    Real California cards encode, in this order:
+
+        * ``ZCB`` - hair colour (California colour code; see constants)
+        * ``ZCC`` - present but blank on issued cards
+        * ``ZCD`` - present but blank on issued cards
+
+    There is **no** ``ZCA`` element.  When the subfile is emitted, ``ZCC`` and
+    ``ZCD`` are always written as empty-valued elements to match issued cards.
+    ``ZCB`` (hair colour) is supplied from :attr:`LicenseData.hair_color`, so
+    this object only carries the two trailing placeholder elements.
     """
 
-    zca: str = ""
-    zcb: str = ""
     zcc: str = ""
     zcd: str = ""
 
-    def elements(self) -> List[Element]:
-        out: List[Element] = []
-        for eid, value in (
-            ("ZCA", self.zca),
-            ("ZCB", self.zcb),
+    def elements(self, hair_color: str) -> List[Element]:
+        """Return the ZC elements (ZCB hair, then blank ZCC and ZCD)."""
+        return [
+            ("ZCB", hair_color),
             ("ZCC", self.zcc),
             ("ZCD", self.zcd),
-        ):
-            # ZC values are jurisdiction-private; encode exactly as entered.
-            out.append((eid, value))
-        return out
-
-    def has_data(self) -> bool:
-        return any((self.zca, self.zcb, self.zcc, self.zcd))
+        ]
 
 
 @dataclass
@@ -80,8 +77,8 @@ class LicenseData:
 
     # -- Physical description -----------------------------------------------
     sex: str = ""                    # DBC (1/2/9)
-    eye_color: str = ""              # DAY
-    hair_color: str = ""             # DAZ (optional)
+    eye_color: str = ""              # DAY (California colour code)
+    hair_color: str = ""             # -> ZCB in the California ZC subfile
     height_value: str = ""           # numeric part of DAU
     height_unit: str = C.HEIGHT_UNIT_INCHES
     weight_lb: str = ""              # DAW (optional)
@@ -168,8 +165,8 @@ class LicenseData:
         add("DAJ", self._mandatory_value(self.state))
         add("DAK", F.format_postal(self.postal_code))
 
-        # Optional physical extras.
-        add_optional("DAZ", self.hair_color)
+        # Optional physical extras.  (Hair colour is NOT emitted as DAZ here:
+        # California encodes it as ZCB in the ZC subfile - see zc_elements.)
         add_optional("DAW", F.format_weight(self.weight_lb))
 
         # Document discriminator + country (mandatory).
@@ -190,7 +187,13 @@ class LicenseData:
         return e
 
     def zc_elements(self) -> List[Element]:
-        """California ZC subfile elements (empty list if none supplied)."""
-        if not self.zc.has_data():
+        """
+        California ZC subfile elements: ZCB (hair colour) then blank ZCC/ZCD.
+
+        Emitted whenever a hair colour (or a ZCC/ZCD override) is supplied,
+        matching real California cards.  Returns an empty list - which omits
+        the ZC subfile entirely - only when there is nothing to encode.
+        """
+        if not (self.hair_color or self.zc.zcc or self.zc.zcd):
             return []
-        return [(eid, val) for eid, val in self.zc.elements() if val]
+        return self.zc.elements(self.hair_color)

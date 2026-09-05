@@ -116,13 +116,15 @@ def validate(data: LicenseData) -> ValidationResult:
         errors.append("Sex (DBC) must be 1 (male), 2 (female) or 9 (not specified).")
     if data.eye_color and data.eye_color not in C.EYE_COLORS:
         errors.append(
-            f"Eye colour (DAY) '{data.eye_color}' is not a valid D-20 code."
+            f"Eye colour (DAY) '{data.eye_color}' is not a valid California "
+            "colour code (brown is BRN, not BRO)."
         )
     elif not data.eye_color:
         errors.append("Eye colour (DAY) is required.")
     if data.hair_color and data.hair_color not in C.HAIR_COLORS:
         errors.append(
-            f"Hair colour (DAZ) '{data.hair_color}' is not a valid D-20 code."
+            f"Hair colour (ZCB) '{data.hair_color}' is not a valid California "
+            "colour code (brown is BRN, not BRO)."
         )
     for label, val in (("Family", data.family_truncation),
                        ("First", data.first_truncation),

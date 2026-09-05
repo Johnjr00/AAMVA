@@ -137,8 +137,8 @@ def _sample_ca() -> LicenseData:
         expiry_date="03/22/2028",
         dob="05/12/1985",
         sex="2",
-        eye_color="BRO",
-        hair_color="BRO",
+        eye_color="BRN",              # California brown = BRN (not D-20 BRO)
+        hair_color="BRN",             # -> ZCB
         height_value="65",
         height_unit="in",
         street1="1234 MAIN ST",
@@ -154,7 +154,7 @@ def _sample_ca() -> LicenseData:
         compliance_type="F",
         card_revision_date="01/01/2018",
         organ_donor=True,
-        zc=ZCSubfile(zca="", zcb="", zcc="BRO", zcd=""),
+        zc=ZCSubfile(),               # ZCC / ZCD blank
     )
 
 
@@ -165,19 +165,40 @@ def test_ca_header_uses_version_09_and_iin_636014():
     assert parsed.header.aamva_version == "09"
 
 
-def test_ca_includes_zc_subfile_when_present():
+def test_ca_zc_subfile_layout_zcb_hair_no_zca_blank_zcc_zcd():
     payload = encode(_sample_ca())
     parsed = parser.parse(payload)
     assert parsed.header.num_entries == 2
-    assert parsed.subfile("ZC").as_dict()["ZCC"] == "BRO"
+    zc = parsed.subfile("ZC")
+    # Element order and presence must match a real CA card.
+    assert [eid for eid, _ in zc.elements] == ["ZCB", "ZCC", "ZCD"]
+    zc_dict = zc.as_dict()
+    assert "ZCA" not in zc_dict            # California has no ZCA
+    assert zc_dict["ZCB"] == "BRN"         # hair colour (brown)
+    assert zc_dict["ZCC"] == ""            # present but blank
+    assert zc_dict["ZCD"] == ""            # present but blank
 
 
-def test_ca_omits_zc_subfile_when_empty():
+def test_ca_omits_zc_subfile_when_no_hair_or_zc_data():
     data = _sample_ca()
+    data.hair_color = ""
     data.zc = ZCSubfile()
     parsed = parser.parse(encode(data))
     assert parsed.header.num_entries == 1
     assert [sf.subfile_type for sf in parsed.subfiles] == ["DL"]
+
+
+def test_brown_is_brn_not_bro():
+    """California's brown deviation: BRN for eye (DAY) and hair (ZCB)."""
+    parsed = parser.parse(encode(_sample_ca()))
+    assert parsed.subfile("DL").as_dict()["DAY"] == "BRN"
+    assert parsed.subfile("ZC").as_dict()["ZCB"] == "BRN"
+
+
+def test_hair_not_emitted_as_daz_in_dl_subfile():
+    """Hair colour lives in ZCB, so DAZ must not appear in the DL subfile."""
+    parsed = parser.parse(encode(_sample_ca()))
+    assert "DAZ" not in parsed.subfile("DL").as_dict()
 
 
 def test_dates_formatted_mmddccyy():
