@@ -1,0 +1,7 @@
+# Development / test dependencies (in addition to requirements.txt).
+-r requirements.txt
+pytest>=7.0
+# Optional: enables the end-to-end render->decode scannability test.
+pdf417decoder>=1.0.8
+# Build a standalone Windows .exe:
+pyinstaller>=6.0

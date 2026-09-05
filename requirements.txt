@@ -1,0 +1,5 @@
+# Runtime dependencies for the California DL/ID PDF417 barcode generator.
+# tkinter ships with the standard CPython installer on Windows, so it is not
+# listed here (install Python from python.org with the "tcl/tk" option checked).
+pdf417gen>=0.8.1
+Pillow>=9.0.0
