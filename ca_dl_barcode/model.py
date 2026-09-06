@@ -30,23 +30,27 @@ class ZCSubfile:
 
     Real California cards encode, in this order:
 
-        * ``ZCB`` - hair colour (California colour code; see constants)
+        * ``ZCA`` - eye colour, using California's colour code
+        * ``ZCB`` - hair colour, using California's colour code
         * ``ZCC`` - present but blank on issued cards
         * ``ZCD`` - present but blank on issued cards
 
-    There is **no** ``ZCA`` element.  When the subfile is emitted, ``ZCC`` and
-    ``ZCD`` are always written as empty-valued elements to match issued cards.
-    ``ZCB`` (hair colour) is supplied from :attr:`LicenseData.hair_color`, so
-    this object only carries the two trailing placeholder elements.
+    ``ZCA`` and ``ZCB`` mirror the DL subfile's eye (``DAY``) and hair (``DAZ``)
+    colours, but with California's codes - notably brown is ``BRN`` here while
+    ``DAY``/``DAZ`` use the standard D-20 ``BRO``.  This object carries only the
+    two trailing blank placeholders; the colours are supplied at build time from
+    :attr:`LicenseData.eye_color` / :attr:`LicenseData.hair_color`.
     """
 
     zcc: str = ""
     zcd: str = ""
 
-    def elements(self, hair_color: str) -> List[Element]:
-        """Return the ZC elements (ZCB hair, then blank ZCC and ZCD)."""
+    def elements(self, eye_color: str, hair_color: str) -> List[Element]:
+        """Return the ZC elements: ZCA eye, ZCB hair (California codes), then
+        blank ZCC and ZCD.  Colours are translated to California's codes."""
         return [
-            ("ZCB", hair_color),
+            ("ZCA", C.to_california_color(eye_color)),
+            ("ZCB", C.to_california_color(hair_color)),
             ("ZCC", self.zcc),
             ("ZCD", self.zcd),
         ]
@@ -77,8 +81,8 @@ class LicenseData:
 
     # -- Physical description -----------------------------------------------
     sex: str = ""                    # DBC (1/2/9)
-    eye_color: str = ""              # DAY (California colour code)
-    hair_color: str = ""             # DAZ (DL subfile) AND ZCB (ZC subfile)
+    eye_color: str = ""              # DAY (D-20) + ZCA (California code)
+    hair_color: str = ""             # DAZ (D-20) + ZCB (California code)
     height_value: str = ""           # numeric part of DAU
     height_unit: str = C.HEIGHT_UNIT_INCHES
     weight_lb: str = ""              # DAW (optional)
@@ -165,9 +169,9 @@ class LicenseData:
         add("DAJ", self._mandatory_value(self.state))
         add("DAK", F.format_postal(self.postal_code))
 
-        # Optional physical extras.  California emits hair colour BOTH as the
-        # standard AAMVA DAZ element here AND as ZCB in the jurisdiction ZC
-        # subfile (see zc_elements); both carry the same California colour code.
+        # Optional physical extras.  DAZ carries hair colour with the STANDARD
+        # D-20 code (brown = BRO); California also mirrors it as ZCB with its
+        # own code (brown = BRN) in the ZC subfile - see zc_elements.
         add_optional("DAZ", self.hair_color)
         add_optional("DAW", F.format_weight(self.weight_lb))
 
@@ -190,12 +194,14 @@ class LicenseData:
 
     def zc_elements(self) -> List[Element]:
         """
-        California ZC subfile elements: ZCB (hair colour) then blank ZCC/ZCD.
+        California ZC subfile elements: ZCA (eye colour), ZCB (hair colour) -
+        both with California codes - then blank ZCC/ZCD.
 
-        Emitted whenever a hair colour (or a ZCC/ZCD override) is supplied,
-        matching real California cards.  Returns an empty list - which omits
-        the ZC subfile entirely - only when there is nothing to encode.
+        Emitted whenever an eye or hair colour (or a ZCC/ZCD override) is
+        supplied, matching real California cards.  Returns an empty list -
+        which omits the ZC subfile entirely - only when there is nothing to
+        encode.
         """
-        if not (self.hair_color or self.zc.zcc or self.zc.zcd):
+        if not (self.eye_color or self.hair_color or self.zc.zcc or self.zc.zcd):
             return []
-        return self.zc.elements(self.hair_color)
+        return self.zc.elements(self.eye_color, self.hair_color)

@@ -45,7 +45,7 @@ the California encoding used for the card design in production **2018 – Octobe
 | Dates | `MMDDCCYY` (US jurisdictions) |
 | Height (DAU) | `NNN in` / `NNN cm`, zero‑padded, 6 bytes (e.g. `068 in`) |
 | Postal (DAK) | numeric ZIP padded to 9 digits, fixed 11‑byte field |
-| Colours | 3‑letter codes; **California encodes brown as `BRN`** (the AAMVA D‑20 code is `BRO`) for both eye colour (DAY) and hair colour (ZCB) |
+| Colours | D‑20 3‑letter codes in the `DL` subfile (`DAY`/`DAZ`, brown = `BRO`); California mirrors them in the `ZC` subfile (`ZCA`/`ZCB`) with **brown = `BRN`** |
 
 The `DL` subfile always contains the **22 mandatory elements** (Table D.3):
 `DCA DCB DCD DBA DCS DAC DAD DBD DBB DBC DAY DAU DAG DAI DAJ DAK DAQ DCF DCG
@@ -54,30 +54,31 @@ value.
 
 ### California specifics (deviations from the base AAMVA standard)
 
-Real California cards differ from a generic AAMVA card in two ways this app
-reproduces:
+Real California cards encode eye and hair colour **twice** — once with the
+standard AAMVA D‑20 code in the `DL` subfile, and again with California's own
+code in the jurisdiction `ZC` subfile:
 
-- **Brown is `BRN`, not `BRO`.** The AAMVA D‑20 dictionary abbreviates brown as
-  `BRO`, but California encodes it as `BRN` for both eye colour (`DAY`) and hair
-  colour (`ZCB`). Only brown deviates; other colours use the standard D‑20 code.
-- **Hair colour is encoded twice.** California carries hair colour in *both* the
-  standard AAMVA `DAZ` element (in the `DL` subfile) *and* as element `ZCB` in
-  the jurisdiction‑specific `ZC` subfile. Both use the same California colour
-  code.
+| Colour | `DL` subfile (standard D‑20) | `ZC` subfile (California) |
+|--------|------------------------------|---------------------------|
+| Eye  | `DAY` — brown = `BRO` | `ZCA` — brown = `BRN` |
+| Hair | `DAZ` — brown = `BRO` | `ZCB` — brown = `BRN` |
+
+**Brown is the only colour that differs** between the two — every other colour
+(e.g. blue = `BLU`, hazel = `HAZ`) is identical in both places.
 
 The California `ZC` subfile layout is:
 
 | Element | Contents |
 |---------|----------|
-| `ZCA` | *(not present)* |
+| `ZCA` | eye colour (California code) |
 | `ZCB` | hair colour (California code) |
 | `ZCC` | present but blank on issued cards |
 | `ZCD` | present but blank on issued cards |
 
-Set the hair colour once in **Physical description**; it populates both `DAZ`
-and `ZCB`. The `ZC` subfile is emitted whenever a hair colour is present (with
-`ZCC`/`ZCD` written blank). Leave the hair colour empty to omit both `DAZ` and
-the `ZC` subfile.
+Set eye and hair colour once in **Physical description**; each populates its
+standard `DL` element (`DAY`/`DAZ`) and its California `ZC` element
+(`ZCA`/`ZCB`) automatically. The `ZC` subfile is emitted whenever an eye or hair
+colour is present (with `ZCC`/`ZCD` written blank).
 
 ## Requirements
 

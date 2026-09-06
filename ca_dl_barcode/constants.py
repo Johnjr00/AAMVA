@@ -59,24 +59,33 @@ SEX_CODES = {
 }
 
 # --------------------------------------------------------------------------- #
-# Colour codes - CALIFORNIA DEVIATION FROM THE AAMVA D-20 STANDARD
+# Colour codes - AAMVA D-20 standard, plus California's ZC-subfile override
 # --------------------------------------------------------------------------- #
-# The AAMVA D-20 dictionary abbreviates brown as "BRO".  California does NOT:
-# real California DL/ID barcodes encode brown as "BRN" for both eye colour
-# (DAY) and hair colour (the ZCB element of the California ZC subfile).  Naive
-# validators that expect the D-20 "BRO" flag genuine California cards as
-# anomalies - so this generator uses California's codes to match real cards.
-#
-# Only brown is known to deviate; every other colour uses the standard D-20
-# three-letter code.  The D-20 originals are kept here for reference.
-CALIFORNIA_BROWN_CODE = "BRN"       # California's code for brown (D-20 = "BRO")
+# The standard AAMVA fields use the D-20 three-letter codes, where brown is
+# "BRO".  California mirrors eye and hair colour in its jurisdiction ZC subfile
+# (ZCA = eye, ZCB = hair) using its OWN codes, where brown is "BRN".  So on a
+# real California card:
+#     eye colour  -> DAY = "BRO" (standard)   and  ZCA = "BRN" (California)
+#     hair colour -> DAZ = "BRO" (standard)   and  ZCB = "BRN" (California)
+# Brown is the only colour that differs; every other colour is identical in
+# both places.
 D20_BROWN_CODE = "BRO"              # AAMVA D-20 standard code for brown
+CALIFORNIA_BROWN_CODE = "BRN"       # California's ZC-subfile code for brown
 
-# DAY Eye colour - California codes (D-20 with brown -> BRN), F3A
+# Maps a standard D-20 code to California's ZC-subfile code.  Only brown moves.
+CALIFORNIA_COLOR_OVERRIDES = {D20_BROWN_CODE: CALIFORNIA_BROWN_CODE}
+
+
+def to_california_color(code: str) -> str:
+    """Translate a standard D-20 colour code to California's ZC-subfile code."""
+    return CALIFORNIA_COLOR_OVERRIDES.get(code, code)
+
+
+# DAY Eye colour - AAMVA D-20 three-letter codes (Table D.3, F3A)
 EYE_COLORS = {
     "BLK": "Black",
     "BLU": "Blue",
-    "BRN": "Brown",                # California deviation (D-20: BRO)
+    "BRO": "Brown",
     "DIC": "Dichromatic",
     "GRY": "Gray",
     "GRN": "Green",
@@ -86,14 +95,12 @@ EYE_COLORS = {
     "UNK": "Unknown",
 }
 
-# Hair colour used in the California ZC subfile element ZCB - California codes
-# (D-20 with brown -> BRN).  California stores hair colour in ZCB, not the
-# AAMVA DAZ element, so DAZ is not emitted by this generator.
+# DAZ Hair colour - AAMVA D-20 three-letter codes (Table D.4, V12A)
 HAIR_COLORS = {
     "BAL": "Bald",
     "BLK": "Black",
     "BLN": "Blond",
-    "BRN": "Brown",                # California deviation (D-20: BRO)
+    "BRO": "Brown",
     "GRY": "Gray",
     "RED": "Red/Auburn",
     "SDY": "Sandy",

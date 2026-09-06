@@ -137,8 +137,8 @@ def _sample_ca() -> LicenseData:
         expiry_date="03/22/2028",
         dob="05/12/1985",
         sex="2",
-        eye_color="BRN",              # California brown = BRN (not D-20 BRO)
-        hair_color="BRN",             # -> ZCB
+        eye_color="BRO",              # standard D-20 code (DAY); ZCA becomes BRN
+        hair_color="BRO",             # standard D-20 code (DAZ); ZCB becomes BRN
         height_value="65",
         height_unit="in",
         street1="1234 MAIN ST",
@@ -165,22 +165,23 @@ def test_ca_header_uses_version_09_and_iin_636014():
     assert parsed.header.aamva_version == "09"
 
 
-def test_ca_zc_subfile_layout_zcb_hair_no_zca_blank_zcc_zcd():
+def test_ca_zc_subfile_layout_zca_eye_zcb_hair_blank_zcc_zcd():
     payload = encode(_sample_ca())
     parsed = parser.parse(payload)
     assert parsed.header.num_entries == 2
     zc = parsed.subfile("ZC")
     # Element order and presence must match a real CA card.
-    assert [eid for eid, _ in zc.elements] == ["ZCB", "ZCC", "ZCD"]
+    assert [eid for eid, _ in zc.elements] == ["ZCA", "ZCB", "ZCC", "ZCD"]
     zc_dict = zc.as_dict()
-    assert "ZCA" not in zc_dict            # California has no ZCA
-    assert zc_dict["ZCB"] == "BRN"         # hair colour (brown)
+    assert zc_dict["ZCA"] == "BRN"         # eye colour (California code)
+    assert zc_dict["ZCB"] == "BRN"         # hair colour (California code)
     assert zc_dict["ZCC"] == ""            # present but blank
     assert zc_dict["ZCD"] == ""            # present but blank
 
 
-def test_ca_omits_zc_subfile_when_no_hair_or_zc_data():
+def test_ca_omits_zc_subfile_when_no_colour_or_zc_data():
     data = _sample_ca()
+    data.eye_color = ""
     data.hair_color = ""
     data.zc = ZCSubfile()
     parsed = parser.parse(encode(data))
@@ -188,20 +189,24 @@ def test_ca_omits_zc_subfile_when_no_hair_or_zc_data():
     assert [sf.subfile_type for sf in parsed.subfiles] == ["DL"]
 
 
-def test_brown_is_brn_not_bro():
-    """California's brown deviation: BRN for eye (DAY) and hair (DAZ, ZCB)."""
+def test_brown_is_bro_in_dl_and_brn_in_zc():
+    """DAY/DAZ use standard BRO; ZCA/ZCB use California's BRN. Brown only."""
     parsed = parser.parse(encode(_sample_ca()))
-    assert parsed.subfile("DL").as_dict()["DAY"] == "BRN"
-    assert parsed.subfile("DL").as_dict()["DAZ"] == "BRN"
-    assert parsed.subfile("ZC").as_dict()["ZCB"] == "BRN"
+    dl = parsed.subfile("DL").as_dict()
+    zc = parsed.subfile("ZC").as_dict()
+    assert dl["DAY"] == "BRO"               # eye, standard D-20
+    assert dl["DAZ"] == "BRO"               # hair, standard D-20
+    assert zc["ZCA"] == "BRN"               # eye, California
+    assert zc["ZCB"] == "BRN"               # hair, California
 
 
-def test_hair_emitted_in_both_daz_and_zcb():
-    """California carries hair colour in BOTH the DL DAZ element and ZC/ZCB."""
-    parsed = parser.parse(encode(_sample_ca()))
-    daz = parsed.subfile("DL").as_dict()["DAZ"]
-    zcb = parsed.subfile("ZC").as_dict()["ZCB"]
-    assert daz == zcb == "BRN"
+def test_non_brown_colour_identical_in_dl_and_zc():
+    """Only brown deviates - e.g. blue eyes stay BLU in both DAY and ZCA."""
+    data = _sample_ca()
+    data.eye_color = "BLU"
+    parsed = parser.parse(encode(data))
+    assert parsed.subfile("DL").as_dict()["DAY"] == "BLU"
+    assert parsed.subfile("ZC").as_dict()["ZCA"] == "BLU"
 
 
 def test_dates_formatted_mmddccyy():

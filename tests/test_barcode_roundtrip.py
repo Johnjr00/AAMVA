@@ -25,7 +25,7 @@ def _sample() -> LicenseData:
     return LicenseData(
         family_name="CARDHOLDER", first_name="JANE", middle_name="QUINCY",
         issue_date="01/15/2020", expiry_date="03/22/2028", dob="05/12/1985",
-        sex="2", eye_color="BRN", hair_color="BRN", height_value="65",
+        sex="2", eye_color="BRO", hair_color="BRO", height_value="65",
         street1="1234 MAIN ST", city="LOS ANGELES", state="CA",
         postal_code="90001", dl_number="D1234567", vehicle_class="C",
         restrictions="NONE", endorsements="NONE",
